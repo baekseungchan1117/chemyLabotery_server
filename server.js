@@ -4,17 +4,14 @@ const db = require('./lib/db');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken')
-const mysql = require('mysql2')
-
-
+const jwt = require('jsonwebtoken');
+const mysql = require('mysql2');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 8080;
-
 const secretKey = process.env.JWT_SECRET;
 
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -24,44 +21,40 @@ app.use((req, res, next) => {
 
         jwt.verify(token, secretKey, (err, user) => {
             if (err) {
-                return res.sendStatus(403); // 유효하지 않은 토큰
+                return res.sendStatus(403); // Invalid token
             }
-            req.user = user; // 유효한 토큰, user 정보를 req 객체에 추가
-            next(); // 다음 미들웨어 또는 라우터 핸들러로 이동
+            req.user = user; // Valid token, add user information to req object
+            next(); // Move to the next middleware or route handler
         });
     } else {
         next();
     }
 });
 
-
 app.post("/balance", (req, res) => {
-    const token = req.headers.authorization.split(' ')[1]; // 헤더에서 토큰 추출
+    const token = req.headers.authorization.split(' ')[1];
     const value = req.body.value;
-
 
     jwt.verify(token, secretKey, (err, user) => {
         if (err) {
-            console.log(err); // 에러 출력
-            return res.sendStatus(403); // 유효하지 않은 토큰
+            console.log(err); // Log error
+            return res.sendStatus(403); // Invalid token
         }
 
         const username = user.username;
 
-        // username에 해당하는 userId를 가져와야 함
         db.query('SELECT id FROM userTable WHERE username = ?', [username], function (error, results) {
             if (error) {
-                console.log(error); // DB 에러 출력
+                console.log(error); // Log DB error
                 return res.status(500).send('Database error');
             }
 
             if (results.length > 0) {
-                const userId = results[0].id; // 여기서 userId를 정의
+                const userId = results[0].id;
 
-                // userId를 사용해서 userBalance 테이블에 데이터 삽입
                 db.query('INSERT INTO userBalance (userId, balacedata) VALUES (?, ?)', [userId, String(value)], function (error, results) {
                     if (error) {
-                        console.log(error); // DB 에러 출력
+                        console.log(error); // Log DB error
                         return res.status(500).send('Database error');
                     }
 
@@ -72,7 +65,6 @@ app.post("/balance", (req, res) => {
             }
         });
     });
-
 });
 
 
@@ -653,7 +645,6 @@ app.get('/help', (req, res) => {
             return res.status(500).send('Database error');
         }
         
-        console.log(result);
         res.send('dkjdj'); // You can modify this response as needed
     });
 });
@@ -661,7 +652,6 @@ app.get('/help', (req, res) => {
 
 
 
-
-app.listen(PORT, (req, res) => {
-    console.log(`${PORT}포트가 생성되었습니다.`);
-})
+app.listen(PORT, () => {
+    console.log(`${PORT} port is listening.`);
+});
